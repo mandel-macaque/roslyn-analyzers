@@ -91,6 +91,7 @@ public class Test
     }
 }
 ";
+
             await VerifyAnalyzerCSAsync(csSource, s_msBuildPlatforms);
         }
 
@@ -1060,6 +1061,41 @@ class Test
 }";
 
             await VerifyAnalyzerCSAsync(source);
+        }
+
+        [Fact]
+        public async Task GuardedWith_UIDevice_CheckSystemVersion()
+        {
+            var source = @"
+using System.Runtime.Versioning;
+using System;
+
+class UIImage {
+    string _imageName = string.Empty;
+    private UIImage (string imageName) {
+        _imageName = imageName;
+    }
+
+    [SupportedOSPlatform(""ios13.0"")]
+    [SupportedOSPlatform(""maccatalyst13.1"")]
+    public static UIImage GetSystemImage(string systemImage) {
+        return new UIImage (systemImage);
+    }
+}
+
+class Test
+{
+    void M1()
+    {
+        if (OperatingSystem.IsIOSVersionAtLeast (13) || OperatingSystem.IsMacCatalystVersionAtLeast(13, 1))
+        {
+            var foo = UIImage.GetSystemImage(""foo"");
+        }
+    }
+}";
+
+            await VerifyAnalyzerCSAsync(source);
+
         }
 
         public static IEnumerable<object[]> OperatingSystem_IsOsName_MethodsTestData()
